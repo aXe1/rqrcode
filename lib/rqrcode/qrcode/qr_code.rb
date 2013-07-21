@@ -117,7 +117,7 @@ module RQRCode #:nodoc:
 
       @data                 = string
 
-      mode                  = QRAlphanumeric.valid_data?( @data ) ? :mode_alpha_numk : :mode_8bit_byte
+      mode                  = detect_mode
 
       max_size_array        = QRMAXDIGITS[level][mode]
       size                  = options[:size] || smallest_size_for(string, max_size_array)
@@ -126,9 +126,24 @@ module RQRCode #:nodoc:
       @version              = size
       @module_count         = @version * 4 + QRPOSITIONPATTERNLENGTH
       @modules              = Array.new( @module_count )
-      @data_list            = (mode == :mode_alpha_numk) ? QRAlphanumeric.new( @data ) : QR8bitByte.new( @data )
+      @data_list            = case mode
+                                when :mode_number then QRNumeric.new(@data)
+                                when :mode_alpha_numk then QRAlphanumeric.new(@data)
+                                when :mode_8bit_byte then QR8bitByte.new(@data)
+                                else raise "Unknown mode `#{mode.to_s}`."
+                              end
       @data_cache           = nil
       self.make
+    end
+    
+    def detect_mode
+      if QRNumeric.valid_data?(@data)
+        :mode_number
+      elsif QRAlphanumeric.valid_data?(@data)
+        :mode_alpha_numk
+      else
+        :mode_8bit_byte
+      end
     end
 
     # <tt>is_dark</tt> is called with a +col+ and +row+ parameter. This will

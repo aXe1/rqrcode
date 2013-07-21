@@ -69,6 +69,13 @@ module RQRCode
       
     end
     
+    def numeric_encoding_start(length)
+      
+      put( QRMODE[:mode_number], 4 )
+      put(length, QRUtil.get_length_in_bits(QRMODE[:mode_number], @version))
+      
+    end
+    
     def pad_until(prefered_size)
       # Align on byte
       while get_length_in_bits % 8 != 0
